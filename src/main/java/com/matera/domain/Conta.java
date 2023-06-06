@@ -1,19 +1,21 @@
 package com.matera.domain;
 
 import com.matera.dto.ContaDto;
+import com.matera.exceptions.SaldoInsuficienteException;
+import com.matera.exceptions.ValorInvalidoException;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-
+@Slf4j
 @Entity
 @Getter @Setter
 public class Conta {
@@ -25,7 +27,7 @@ public class Conta {
     private int numero = new Random().nextInt(100000);
     private BigDecimal saldo = BigDecimal.ZERO;
 
-    @Embedded
+    @ManyToOne
     private Banco banco;
 
     @CreationTimestamp
@@ -47,6 +49,43 @@ public class Conta {
     private List<TipoTarifa> tipostarifa = new ArrayList<>();
 
     public Conta(){}
+
+    public void credito(BigDecimal valor) {
+        this.validar(valor);
+       saldo = saldo.add(valor);
+       log.info("Conta {}/{} foi creditada com {} valor.", this.agencia, this.numero, valor);
+    }
+
+    public void debito(BigDecimal valor) {
+        this.validar(valor);
+
+
+        if (valor.compareTo(saldo) > 0) {
+            throw new SaldoInsuficienteException("Conta não tem saldo para atender a solicitacao");
+        }
+        saldo = saldo.subtract(valor);
+        log.info("Conta {}/{} foi debitada com {} valor.", this.agencia, this.numero, valor);
+    }
+
+    private void validar(BigDecimal valor) {
+        final String mensagem = String.format("O valor %s é inválido.", valor);
+        if (valor == null) {
+
+           throw new ValorInvalidoException(mensagem);
+        }
+
+        if (this.valorIncorreto(valor)) {
+
+            throw new ValorInvalidoException(mensagem);
+        }
+    }
+
+
+    private boolean valorIncorreto(BigDecimal valor) {
+        //NPE
+        return valor.compareTo(BigDecimal.ZERO) <= 0;
+    }
+
 
     public ContaDto toContaDto(){
         ContaDto dto = new ContaDto();

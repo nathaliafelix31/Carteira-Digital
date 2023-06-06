@@ -4,12 +4,15 @@ import com.matera.domain.Conta;
 import com.matera.domain.Titular;
 import com.matera.dto.ContaRequestDto;
 import com.matera.exceptions.ContaExistenteException;
+import com.matera.exceptions.ContaInexistenteException;
 import com.matera.repository.ContaRepository;
 import com.matera.repository.TitularRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -48,4 +51,38 @@ public class ContaService {
     public List<Conta> procuraContas() {
         return (List<Conta>) contaRepository.findAll();
     }
+
+    public Conta procuraConta(Long id){
+        Optional<Conta> contaOptional = contaRepository.findById(id);
+        if(contaOptional.isEmpty()){
+            throw new ContaInexistenteException("Essa conta não existe!");
+        }
+        return contaOptional.get();
+    }
+
+    public Conta creditarConta(Long idConta, BigDecimal valor){
+       Conta conta = procuraConta(idConta);
+       conta.credito(valor);
+       return contaRepository.save(conta);
+    }
+
+    public Conta debitaConta(Long idConta, BigDecimal valor) {
+        Conta conta = procuraConta(idConta);
+        conta.debito(valor);
+        return contaRepository.save(conta);
+    }
+    public void transferencia(Long idContaDebitada, Long idContaCreditada, BigDecimal valor) {
+
+        Conta contaDebitada = procuraConta(idContaDebitada);
+        Conta contaCreditada = procuraConta(idContaCreditada);
+
+        contaDebitada.debito(valor);
+        contaCreditada.credito(valor);
+        List<Conta> contas = new ArrayList<>();
+        contas.add(contaCreditada);
+        contas.add(contaDebitada);
+        contaRepository.saveAll(contas);
+    }
+
+
 }

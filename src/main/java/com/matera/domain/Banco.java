@@ -1,11 +1,19 @@
 package com.matera.domain;
+import lombok.Getter;
+import lombok.Setter;
 
-import javax.persistence.Embeddable;
+import javax.persistence.*;
+import java.util.Random;
 
-@Embeddable
+@Getter
+@Setter
+@Entity
 public class Banco {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-    private String nomeBanco;
-
-    private String enderecoBanco;
+    @Column(unique = true)
+    private int codigo = new Random().nextInt(1000);
+    private String nome;
 }
