@@ -1,10 +1,14 @@
 package com.matera.service;
 
+import com.matera.domain.Banco;
 import com.matera.domain.Conta;
 import com.matera.domain.Titular;
 import com.matera.dto.ContaRequestDto;
+import com.matera.exceptions.BancoInexistenteException;
 import com.matera.exceptions.ContaExistenteException;
 import com.matera.exceptions.ContaInexistenteException;
+import com.matera.exceptions.OperacaoInvalidaException;
+import com.matera.repository.BancoRepository;
 import com.matera.repository.ContaRepository;
 import com.matera.repository.TitularRepository;
 import lombok.RequiredArgsConstructor;
@@ -22,8 +26,12 @@ public class ContaService {
 
     private final ContaRepository contaRepository;
     private final TitularRepository titularRepository;
+    private final BancoRepository bancoRepository;
 
     public Conta criarConta(ContaRequestDto requestDto){
+
+        int codigo = requestDto.getCodigo();
+        final Banco banco = bancoRepository.findByCodigo(codigo).orElseThrow(() -> new BancoInexistenteException("Banco não encontrado: " + codigo));
 
         final Titular titular = new Titular();
         titular.setCpf(requestDto.getCpf());
@@ -76,6 +84,8 @@ public class ContaService {
         Conta contaDebitada = procuraConta(idContaDebitada);
         Conta contaCreditada = procuraConta(idContaCreditada);
 
+        validarTransferencia(contaDebitada, contaCreditada);
+
         contaDebitada.debito(valor);
         contaCreditada.credito(valor);
         List<Conta> contas = new ArrayList<>();
@@ -84,5 +94,10 @@ public class ContaService {
         contaRepository.saveAll(contas);
     }
 
+    private static void validarTransferencia(Conta contaDebitada, Conta contaCreditada) {
+        if (contaDebitada.getBanco().getCodigo() != contaCreditada.getBanco().getCodigo()) {
+            throw new OperacaoInvalidaException();
+        }
+    }
 
 }

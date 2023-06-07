@@ -12,4 +12,8 @@ public class ContaRequestDto {
     private String nome;
 
     private String cpf;
+
+    private int codigo;
+
+    private String chave;
 }
