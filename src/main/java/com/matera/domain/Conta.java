@@ -1,6 +1,8 @@
 package com.matera.domain;
 
-import com.matera.dto.ContaDto;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.matera.dto.ContaResponseDto;
+import com.matera.dto.PixBacenDto;
 import com.matera.exceptions.SaldoInsuficienteException;
 import com.matera.exceptions.ValorInvalidoException;
 import lombok.Getter;
@@ -22,10 +24,10 @@ public class Conta {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     private int agencia;
     private int numero = new Random().nextInt(100000);
     private BigDecimal saldo = BigDecimal.ZERO;
+    private String pix;
 
     @ManyToOne
     private Banco banco;
@@ -36,6 +38,7 @@ public class Conta {
     @UpdateTimestamp
     private LocalDateTime dataUltimaAtualização;
 
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "titular_id")
     private Titular titular;
@@ -87,11 +90,20 @@ public class Conta {
     }
 
 
-    public ContaDto toContaDto(){
-        ContaDto dto = new ContaDto();
+    public ContaResponseDto toContaDto(){
+        ContaResponseDto dto = new ContaResponseDto();
         dto.setAgencia(this.getAgencia());
         dto.setNumero(this.getNumero());
         dto.setSaldo(this.getSaldo());
+        dto.setChavePix(this.getPix());
+        return dto;
+    }
+    public PixBacenDto toBacenDto() {
+        PixBacenDto dto = new PixBacenDto();
+        dto.setAgencia(this.agencia);
+        dto.setNumero(this.numero);
+        dto.setChave(this.pix);
+        dto.setCpf(this.titular.getCpf());
         return dto;
     }
 }
